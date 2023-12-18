@@ -1,0 +1,97 @@
+ List<string> listBasliklar = new List<string>();
+ List<string> listSecili = new List<string>();
+ List<SutunBasliklari> bolunmusDeger = new List<SutunBasliklari>();
+
+ private void btnDosyaYukle_Click(object sender, EventArgs e)
+ {
+     string klasorAdi = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + "Gunluk_Islem";
+     string dosyaAdi = string.Empty;
+     string dosyaYolu = string.Empty;
+
+     using (OpenFileDialog ofd = new OpenFileDialog())
+     {
+         ofd.Title = "Dosya Seç";
+         ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+         ofd.Filter = "Excel Dosyası | *.xls";
+         ofd.Multiselect = false;
+
+         if (ofd.ShowDialog() == DialogResult.OK)
+         {
+             dosyaAdi = ofd.FileName;
+             dosyaYolu = ofd.SafeFileName;
+         }
+         else
+         {
+             MessageBox.Show("İşlem Yapılmadı", "Çalıkuşu Atakum", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+             return;
+         }
+     }
+
+     MessageBox.Show("Dosya Yüklemesi Başarılı. Sütun ayırma başlayacak!", "Çalıkuşu Atakum", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+     try
+     {
+         Excell.Application xlApp = new Excell.Application();
+         Excell.Workbook xlWorkBook = xlApp.Workbooks.Open(dosyaAdi, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+
+         Excell.Worksheet xlWorkSheet = xlApp.Worksheets[1];
+         Excell.Range xlRange = xlWorkSheet.UsedRange;
+
+         btnExcelHazirla.Visible = true;
+
+         System.Windows.Forms.CheckBox alanlar;
+
+         listBasliklar.Clear();
+         bolunmusDeger.Clear();
+
+
+         for (int i = 1; i <= xlWorkSheet.UsedRange.Columns.Count; i++)
+         {
+             listBasliklar.Add(xlWorkSheet.UsedRange.Cells[1, i].Value);
+         }
+
+
+
+         //Değer Tutucu
+
+         for (int s = 1; s < xlWorkSheet.UsedRange.Rows.Count; s++)
+         {
+             bolunmusDeger.Add(new SutunBasliklari
+             {
+                 SiparisSaati = xlWorkSheet.UsedRange.Cells[s + 1, 1].Value.ToString(),
+                 MusteriAdi = xlWorkSheet.UsedRange.Cells[s + 1, 2].Value.ToString(),
+                 MusteriSoyadi = xlWorkSheet.UsedRange.Cells[s + 1, 3].Value.ToString(),
+                 Telefon = xlWorkSheet.UsedRange.Cells[s + 1, 4].Value.ToString(),
+                 Urunler = xlWorkSheet.UsedRange.Cells[s + 1, 5].Value == null ? "Ürün Yok" : xlWorkSheet.UsedRange.Cells[s + 1, 5].Value.ToString(),
+                 Tutar = decimal.Parse(xlWorkSheet.UsedRange.Cells[s + 1, 6].Value.ToString()),
+                 Kanal = xlWorkSheet.UsedRange.Cells[s + 1, 7].Value.ToString(),
+                 Kurye = xlWorkSheet.UsedRange.Cells[s + 1, 8].Value.ToString(),
+                 Odeme = xlWorkSheet.UsedRange.Cells[s + 1, 9].Value.ToString(),
+                 Durum = xlWorkSheet.UsedRange.Cells[s + 1, 10].Value.ToString(),
+                 Notlar = xlWorkSheet.UsedRange.Cells[s + 1, 11].Value.ToString(),
+             });
+             tsPB.Increment(s);
+         }
+
+
+         for (int k = 0; k < listBasliklar.Count; k++)
+         {
+             tsPB.Increment(k);
+             alanlar = new System.Windows.Forms.CheckBox();
+             alanlar.Tag = k;
+             alanlar.Text = listBasliklar[k];
+             alanlar.Name = "chck_" + listBasliklar[k];
+             alanlar.AutoSize = true;
+             alanlar.Location = new System.Drawing.Point(300, k * 25);
+             alanlar.Padding = new Padding(0, 30, 0, 0);
+             alanlar.CheckedChanged += Alanlar_CheckedChanged;
+             this.Controls.Add(alanlar);
+         }
+         tsPB.Value = 0;
+     }
+     catch (Exception ex)
+     {
+
+         MessageBox.Show(ex.Message);
+     }
+ }
