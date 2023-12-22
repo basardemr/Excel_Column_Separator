@@ -1,0 +1,185 @@
+string klasorAdi = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + "Gunluk_Islem";
+string dosyaAdi = string.Empty;
+string dosyaYolu = string.Empty;
+
+List<string> list = new List<string>();
+List<string> list2 = new List<string>();
+List<string> list3 = new List<string>();
+
+list.Clear();
+list2.Clear();
+list3.Clear();
+
+using (OpenFileDialog ofd = new OpenFileDialog())
+{
+    ofd.Title = "Dosya Seç";
+    ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+    ofd.Filter = "Excel Dosyası | *.xls";
+    ofd.Multiselect = false;
+
+    if (ofd.ShowDialog() == DialogResult.OK)
+    {
+        dosyaAdi = ofd.FileName;
+        dosyaYolu = ofd.SafeFileName;
+    }
+    else
+    {
+        MessageBox.Show("İşlem Yapılmadı", "Çalıkuşu Atakum", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return;
+    }
+}
+
+
+ Excel.Application xlApp = new Excel.Application();
+
+ Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(dosyaAdi, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+
+ Excel.Worksheet xlWorksheet = xlWorkbook.Worksheets[1];
+ Excel.Range xlRange = xlWorksheet.UsedRange;
+
+ Excel.Workbook xlWorkBook2 = xlApp.Workbooks.Add(Type.Missing);
+ Excel.Worksheet xlWorksheet2 = (Excel.Worksheet)xlWorkBook2.ActiveSheet;
+ xlWorksheet2.Name = DateTime.Now.Date.ToString("dd.MM.yyyy");
+
+ Excel.Range range1 = xlWorksheet2.Range["A2:A2000"];
+ Excel.Range range2 = xlWorksheet2.Range["B2:B2000"];
+ Excel.Range range3 = xlWorksheet2.Range["C2:C2000"];
+
+ double total1 = 0;
+ double total2 = 0;
+ double total3 = 0;
+
+
+ Directory.CreateDirectory(klasorAdi);
+
+ for (int i = 1; i <= xlRange.Columns.Count; i++)
+ {
+     if (xlRange.Cells[1, i].Text == "Ödeme")
+     {
+
+         for (int j = 1; j <= xlRange.Rows.Count; j++)
+         {
+             string donenDeger = string.Empty;
+             string sonuc_1 = string.Empty;
+             string numeric_1 = string.Empty;
+
+             donenDeger = xlRange.Cells[j, i].Value2.ToString();
+
+             for (int z = 0; z < donenDeger.Length; z++)
+             {
+                 if (char.IsLetter(donenDeger[z]))
+                 {
+                     sonuc_1 += donenDeger[z];
+                 }
+
+                 if (char.IsNumber(donenDeger[z]))
+                 {
+                     numeric_1 += donenDeger[z];
+                 }
+             }
+
+             if (sonuc_1.Length > 0)
+             {
+                 string ayraciAt = sonuc_1.Replace("TL", " ").Trim();
+
+                 if (ayraciAt == "onlinecreditcard")
+                 {
+                     tsPB.Value = 0;
+                     xlWorksheet2.Cells[1, 1].Value = "VISA (Online)";
+                     xlWorksheet2.Cells[1, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                     xlWorksheet2.Cells[1, 1].Font.Bold = true;
+                     xlWorksheet2.Columns[1].ColumnWidth = 17.57;
+
+                     list.Add(numeric_1);
+
+
+                     for (int s = 0; s < list.Count; s++)
+                     {
+                         range1.Rows[s + 1].Value = DecConvert(int.Parse(list[s]), 2);
+                         tsPB.Increment(s);
+                     }
+                 }
+
+                 if (ayraciAt == "offlinecreditcard")
+                 {
+                     tsPB.Value = 0;
+                     xlWorksheet2.Cells[1, 2].Value = "VISA (Offline)";
+                     xlWorksheet2.Cells[1, 2].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                     xlWorksheet2.Cells[1, 2].Font.Bold = true;
+                     xlWorksheet2.Columns[2].ColumnWidth = 17.57;
+
+                     list2.Add(numeric_1);
+
+                     for (int s = 0; s < list2.Count; s++)
+                     {
+                         range2.Rows[s + 1].Value = DecConvert(int.Parse(list2[s]), 2);
+                         tsPB.Increment(s);
+                     }
+                 }
+
+                 if (ayraciAt == "cash")
+                 {
+                     tsPB.Value = 0;
+                     xlWorksheet2.Cells[1, 3].Value = "Nakit";
+                     xlWorksheet2.Cells[1, 3].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                     xlWorksheet2.Cells[1, 3].Font.Bold = true;
+                     xlWorksheet2.Columns[3].ColumnWidth = 17.57;
+
+                     list3.Add(numeric_1);
+
+                     for (int s = 0; s < list3.Count; s++)
+                     {
+                         range3.Rows[s + 1].Value = DecConvert(int.Parse(list3[s]), 2);
+                         tsPB.Increment(s);
+                     }
+                 }
+
+             }
+         }
+     }
+ }
+
+ for (int a = 1; a <= xlWorksheet2.UsedRange.Rows.Count; a++)
+ {
+     if (range1.Rows[a].Value != null)
+     {
+         total1 += double.Parse(range1.Rows[a].Value.ToString());
+     }
+     tsPB.Increment(a);
+ }
+
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count + 2, 1].Value = total1;
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 1].Font.Bold = true;
+
+
+ for (int n = 1; n <= xlWorksheet2.UsedRange.Rows.Count; n++)
+ {
+     if (range2.Rows[n].Value != null)
+     {
+         total2 += double.Parse(range2.Rows[n].Value.ToString());
+     }
+     tsPB.Increment(n);
+ }
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 2].Value = total2;
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 2].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 2].Font.Bold = true;
+
+
+ for (int k = 1; k <= xlWorksheet2.UsedRange.Rows.Count; k++)
+ {
+     if (range3.Rows[k].Value != null)
+     {
+         total3 += double.Parse(range3.Rows[k].Value.ToString());
+     }
+     tsPB.Increment(k);
+ }
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 3].Value = total3;
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 3].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+ xlWorksheet2.Cells[xlWorksheet2.UsedRange.Rows.Count, 3].Font.Bold = true;
+
+ xlWorkBook2.SaveAs(klasorAdi + "\\" + DateTime.Now.Date.ToString("dd.MM.yyyy") + "_islemi.xlsx");
+ xlWorkBook2.Close();
+ xlApp.Quit();
+ MessageBox.Show("İşlem Tamamlandı", "Çalıkuşu Atakum", MessageBoxButtons.OK, MessageBoxIcon.Information);
+ tsPB.Value = 0;
